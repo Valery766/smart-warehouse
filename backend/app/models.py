@@ -1,5 +1,7 @@
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Integer, String, Float, DateTime, ForeignKey
+from __future__ import annotations
+
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Integer, String, Float, DateTime, ForeignKey, Index
 from datetime import datetime
 from .core.db import Base
 
@@ -21,6 +23,7 @@ class Robot(Base):
     current_zone: Mapped[str] = mapped_column(String(10), default="A")
     current_row: Mapped[int] = mapped_column(Integer, default=1)
     current_shelf: Mapped[int] = mapped_column(Integer, default=1)
+    inventory_records: Mapped[list["InventoryHistory"]] = relationship(back_populates="robot")
 
 class Product(Base):
     __tablename__ = "products"
@@ -29,9 +32,16 @@ class Product(Base):
     category: Mapped[str] = mapped_column(String(100), nullable=True)
     min_stock: Mapped[int] = mapped_column(Integer, default=10)
     optimal_stock: Mapped[int] = mapped_column(Integer, default=100)
+    inventory_records: Mapped[list["InventoryHistory"]] = relationship(back_populates="product")
 
 class InventoryHistory(Base):
     __tablename__ = "inventory_history"
+    __table_args__ = (
+        Index("ix_inventory_history_zone", "zone"),
+        Index("ix_inventory_history_status", "status"),
+        Index("ix_inventory_history_scanned_at", "scanned_at"),
+        Index("ix_inventory_history_robot_id", "robot_id"),
+    )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     robot_id: Mapped[str] = mapped_column(String(50), ForeignKey("robots.id"))
     product_id: Mapped[str] = mapped_column(String(50), ForeignKey("products.id"))
@@ -43,3 +53,5 @@ class InventoryHistory(Base):
     status: Mapped[str] = mapped_column(String(50), nullable=False)  # OK | LOW_STOCK | CRITICAL
     scanned_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    robot: Mapped[Robot] = relationship(back_populates="inventory_records")
+    product: Mapped[Product] = relationship(back_populates="inventory_records")

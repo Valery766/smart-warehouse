@@ -72,7 +72,7 @@ class RecentScan(BaseModel):
     product_id: str
     product_name: str
     qty: int
-    status: Literal["OK","LOW","CRIT"]
+    status: Literal["OK", "LOW_STOCK", "CRITICAL"]
 
 class BootstrapResponse(BaseModel):
     robots: List[RobotDTO]
