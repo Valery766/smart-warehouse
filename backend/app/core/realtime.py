@@ -31,3 +31,13 @@ async def disconnect(sid):
 
 async def emit_dashboard(event: str, data):
     await sio.emit(event, data, room=ROOM_DASHBOARD)
+
+
+def schedule_dashboard_event(event: str, data) -> None:
+    """Fire-and-forget helper that works from sync contexts."""
+    try:
+        sio.start_background_task(emit_dashboard, event, data)
+    except Exception:
+        # We intentionally swallow the exception here to avoid breaking request processing
+        # and rely on structured logging from the caller.
+        pass
